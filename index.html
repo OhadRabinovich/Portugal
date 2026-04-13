@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>פורטוגל האינטראקטיבית - מקורות ומידע רשמי</title>
+    <title>פורטוגל האינטראקטיבית - המדריך המפורט</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -13,94 +13,116 @@
         .site-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px; }
         
+        /* Interactive CSS Map */
         .map-container { position: relative; width: 100%; max-width: 400px; height: 500px; background: #e2e8f0; border-radius: 2rem; margin: auto; overflow: hidden; border: 8px solid white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .map-coast { position: absolute; left: 0; top: 0; width: 60%; height: 100%; background: #f1f5f9; border-right: 4px dashed #cbd5e1; }
         .map-dot { position: absolute; width: 16px; height: 16px; background: #ea580c; border-radius: 50%; cursor: pointer; transition: all 0.3s; z-index: 20; border: 3px solid white; box-shadow: 0 0 10px rgba(234, 88, 12, 0.5); }
         .map-dot:hover { transform: scale(1.5); background: #9a3412; }
         .map-label { position: absolute; font-size: 0.875rem; font-weight: bold; color: #1e293b; white-space: nowrap; pointer-events: none; }
 
+        /* Modal Logic */
         #modal-overlay { transition: opacity 0.3s ease, visibility 0.3s ease; }
-        #modal-content { transition: transform 0.3s ease; }
+        #modal-content { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .modal-open { overflow: hidden; }
+
+        /* Full Page Mode */
+        .modal-full { width: 100vw !important; height: 100vh !important; max-width: none !important; max-height: none !important; border-radius: 0 !important; top: 0 !important; }
+        .full-page-content { max-width: 900px; margin: 0 auto; padding: 4rem 2rem; }
+
+        /* Custom Scrollbar */
+        #modal-content::-webkit-scrollbar { width: 8px; }
+        #modal-content::-webkit-scrollbar-track { background: #f1f1f1; }
+        #modal-content::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 10px; }
 
         @media (max-width: 768px) { .map-container { height: 400px; } }
     </style>
     <!-- Chosen Palette: Warm Iberian (Off-white background #faf8f5, Slate text #1e293b, Terracotta accent #ea580c) -->
-    <!-- Application Structure Plan: Information-rich explorer focusing on official sources. Replaced image generation with direct links to Wikipedia and official websites for maximum reliability. Structure: Map context -> City Selection -> Attraction deep-dive via modal with external resources. -->
-    <!-- Visualization & Content Choices: CSS Map (No SVG), Bar Chart (Chart.js), Dynamic Modals with resource links. Prioritizes informational accuracy over visual generation. -->
+    <!-- Application Structure Plan: Information architect designed this as a "Knowledge Hub". The goal is deep learning about Portugal. Logic: 1) Geographic awareness (Map), 2) Categorized Exploration (City Tabs), 3) Knowledge Deep-Dive (Modal/Full-screen articles). Each attraction has a structured 3-part narrative (History, Design, Practical). -->
+    <!-- Visualization & Content Choices: CSS Map for spatial orientation, Bar Chart for high-level data summary, and an Expandable Document view for the detailed text. All English Wikipedia links kept for reliability. No SVG or Mermaid used. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 </head>
 <body class="antialiased selection:bg-orange-200">
 
     <!-- Modal for Detailed Information -->
-    <div id="modal-overlay" class="fixed inset-0 bg-slate-900/90 z-[100] opacity-0 invisible flex items-center justify-center p-4">
-        <div class="absolute inset-0" onclick="closeModal()"></div>
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-900/95 z-[100] opacity-0 invisible flex items-center justify-center p-0 md:p-4">
+        <!-- Close overlay on background click -->
+        <div class="absolute inset-0 z-0" onclick="closeModal()"></div>
         
-        <div id="modal-content" class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl transform scale-95 relative z-[110]">
-            <button onclick="closeModal()" class="absolute top-4 left-4 bg-slate-800 text-white hover:bg-slate-700 p-2 rounded-full transition-all z-[150] shadow-xl w-10 h-10 flex items-center justify-center">
-                <span class="text-xl font-bold">✕</span>
-            </button>
+        <div id="modal-content" class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl transform scale-95 relative z-[110]">
+            <!-- Action Bar -->
+            <div class="sticky top-0 bg-white/95 backdrop-blur-md p-4 flex justify-between items-center z-[150] border-b border-slate-100 px-6">
+                <div class="flex gap-3">
+                    <button onclick="closeModal()" class="bg-slate-800 text-white hover:bg-slate-700 p-2 rounded-full transition-all shadow-lg w-10 h-10 flex items-center justify-center" title="סגירה">
+                        <span class="text-xl font-bold">✕</span>
+                    </button>
+                    <button id="expand-btn" onclick="toggleFullPage()" class="bg-slate-100 text-slate-800 hover:bg-slate-200 p-2 rounded-full transition-all shadow-md w-10 h-10 flex items-center justify-center" title="תצוגה מלאה">
+                        <span id="expand-icon" class="text-lg">⛶</span>
+                    </button>
+                </div>
+                <div id="modal-mini-title" class="font-bold text-slate-800 text-lg"></div>
+            </div>
+
             <div id="modal-body-content">
-                <!-- Content injected via JS -->
+                <!-- Detailed content will be injected here -->
             </div>
         </div>
     </div>
 
-    <header class="bg-gradient-to-br from-slate-900 via-slate-800 to-orange-900 text-white py-20 px-6 text-center shadow-lg relative">
-        <div class="max-w-4xl mx-auto relative z-10">
-            <span class="inline-block px-4 py-1 bg-orange-600/30 rounded-full text-orange-400 text-sm font-bold mb-4 tracking-widest uppercase">פורטוגל 2026 - מדריך רשמי</span>
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">מסע בין אריחים וארמונות</h1>
-            <p class="text-xl md:text-2xl font-light text-slate-300 max-w-2xl mx-auto leading-relaxed">גלו את פורטוגל דרך מפה אינטראקטיבית וגישה ישירה למקורות המידע הרשמיים של כל אתר.</p>
+    <header class="bg-gradient-to-br from-slate-900 via-slate-800 to-orange-900 text-white py-24 px-6 text-center shadow-lg relative overflow-hidden">
+        <div class="absolute top-0 right-0 opacity-10 text-[20rem] pointer-events-none select-none -mt-20">🇵🇹</div>
+        <div class="max-w-4xl mx-auto relative z-10 text-right md:text-center">
+            <span class="inline-block px-4 py-1 bg-orange-600/30 rounded-full text-orange-400 text-sm font-bold mb-6 tracking-widest uppercase">פורטוגל 2026 - המדריך האנציקלופדי</span>
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight">לחשוף את סודות פורטוגל</h1>
+            <p class="text-xl md:text-2xl font-light text-slate-300 max-w-2xl mx-auto leading-relaxed">מסע אינטראקטיבי מעמיק אל ההיסטוריה, האדריכלות והתרבות של המדינה המרתקת ביותר באירופה.</p>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-16 space-y-24">
+    <main class="max-w-7xl mx-auto px-4 py-20 space-y-32">
 
-        <!-- Navigation Map -->
-        <section id="geo-navigation" class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div class="space-y-6 text-right order-2 lg:order-1">
-                <h2 class="text-4xl font-black text-slate-800 leading-tight">ניווט גיאוגרפי</h2>
-                <p class="text-lg text-slate-600 leading-relaxed">
-                    בחרו נקודה על המפה כדי להתחיל את המסע. כל עיר בפורטוגל מציעה אופי ייחודי - מהבירה הקוסמופוליטית ועד לצפון ההיסטורי והדתי.
+        <!-- Geography Section -->
+        <section id="geo-navigation" class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div class="space-y-8 text-right order-2 lg:order-1">
+                <h2 class="text-5xl font-black text-slate-800 leading-tight">ניווט גיאוגרפי</h2>
+                <p class="text-xl text-slate-600 leading-relaxed">
+                    פורטוגל מחולקת לאזורים בעלי אופי שונה לחלוטין. בחרו נקודה על המפה כדי להתחיל את המחקר שלכם. כל נקודה היא שער לסיפור היסטורי עמוק.
                 </p>
-                <div class="p-6 bg-orange-50 rounded-2xl border-r-4 border-orange-500">
-                    <p class="text-orange-900 font-bold">שימוש ביישום:</p>
-                    <p class="text-orange-800 text-sm">הקליקו על אתר לקבלת הסבר מורחב וקישורים לאתרים הרשמיים ולויקיפדיה.</p>
+                <div class="p-8 bg-orange-50 rounded-3xl border-r-8 border-orange-500 shadow-sm">
+                    <h4 class="text-orange-900 font-bold text-xl mb-2">כיצד להשתמש במדריך?</h4>
+                    <p class="text-orange-800 leading-relaxed">הקליקו על אתר לקבלת סקירה. במידה ותרצו להעמיק, השתמשו בכפתור ה-"תצוגה המלאה" (⛶) לקריאת המאמר המלא על האתר.</p>
                 </div>
             </div>
             
             <div class="order-1 lg:order-2">
                 <div class="map-container" id="interactive-map">
                     <div class="map-coast"></div>
-                    <!-- Dots will be injected here -->
                 </div>
             </div>
         </section>
 
-        <!-- Dashboard -->
-        <section id="explorer" class="bg-white rounded-[3rem] shadow-2xl p-8 md:p-12 border border-slate-100 relative overflow-hidden">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-bold text-slate-800 mb-4">סייר האטרקציות</h2>
-                <div class="flex flex-wrap justify-center gap-3 mt-8" id="city-tabs">
+        <!-- Dashboard Explorer -->
+        <section id="explorer" class="bg-white rounded-[4rem] shadow-2xl p-8 md:p-16 border border-slate-100 relative overflow-hidden">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-slate-800 mb-6">מרכז המידע והאטרקציות</h2>
+                <div class="flex flex-wrap justify-center gap-4 mt-10" id="city-tabs">
                 </div>
             </div>
 
-            <div id="city-content-area" class="transition-all duration-500 opacity-0 translate-y-4">
-                <div class="mb-12">
-                    <h3 id="city-title" class="text-4xl font-black text-slate-800 mb-4"></h3>
-                    <p id="city-desc" class="text-xl text-slate-600 leading-relaxed"></p>
+            <div id="city-content-area" class="transition-all duration-700 opacity-0 translate-y-6">
+                <div class="mb-16 text-right border-r-4 border-slate-200 pr-8">
+                    <h3 id="city-title" class="text-5xl font-black text-slate-800 mb-4 tracking-tight"></h3>
+                    <p id="city-desc" class="text-2xl text-slate-600 leading-relaxed max-w-4xl font-light"></p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="attractions-grid">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10" id="attractions-grid">
                 </div>
             </div>
         </section>
 
-        <!-- Stats -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center bg-slate-50 p-12 rounded-[3rem]">
-            <div class="lg:col-span-1">
-                <h2 class="text-3xl font-bold text-slate-800">התפלגות אתרי חובה</h2>
-                <p class="text-slate-600">ניתוח כמותי של אתרי התיירות המרכזיים המוצגים ביישום לפי עיר.</p>
+        <!-- Analytics -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-16 items-center bg-slate-100 p-12 md:p-20 rounded-[4rem]">
+            <div class="lg:col-span-1 space-y-6 text-right">
+                <h2 class="text-4xl font-bold text-slate-800 leading-tight">פורטוגל במספרים</h2>
+                <p class="text-xl text-slate-600">גרף זה מציג את ריכוז אתרי המורשת והתרבות המרכזיים שנסקרו במדריך זה עבור כל עיר.</p>
             </div>
             <div class="lg:col-span-2 chart-container">
                 <canvas id="attractionsChart"></canvas>
@@ -109,13 +131,15 @@
 
     </main>
 
-    <footer class="bg-slate-900 text-white py-12 px-6">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+    <footer class="bg-slate-900 text-white py-16 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
             <div class="text-right">
-                <h4 class="text-2xl font-bold text-orange-500 mb-2">פורטוגל האינטראקטיבית</h4>
-                <p class="text-slate-400 italic">כל המידע הרשמי במקום אחד.</p>
+                <h4 class="text-3xl font-bold text-orange-500 mb-4">פורטוגל האינטראקטיבית</h4>
+                <p class="text-slate-400 text-lg">המדריך המקיף ביותר בעברית לאדריכלות והיסטוריה פורטוגזית.</p>
             </div>
-            <div class="text-slate-500 text-sm">© 2026 כל הזכויות שמורות.</div>
+            <div class="text-slate-500 text-sm border-t border-slate-800 pt-8 w-full md:w-auto md:border-t-0 md:pt-0">
+                © 2026 כל הזכויות שמורות • מדריך תוכן מעמיק.
+            </div>
         </div>
     </footer>
 
@@ -123,102 +147,237 @@
         const reportData = {
             "ליסבון": {
                 icon: "🚋", coords: { top: "70%", left: "15%" },
-                desc: "עיר הבירה הקסומה של פורטוגל, הבנויה על שבע גבעות.",
+                desc: "עיר האור הלבנה, בירתה ההיסטורית של פורטוגל המשתרעת על פני שבע גבעות תלולות לאורך נהר הטז'ו.",
                 attractions: [
                     { 
                         name: "מגדל בלם", 
-                        short: "מגדל מבוצר מהמאה ה-16.", 
-                        long: "מגדל בלם הוא סמל של עידן התגליות הפורטוגזי, יצירת מופת בסגנון מנואליני הממוקמת על גדת נהר הטז'ו.", 
-                        official: "https://www.patrimoniocultural.gov.pt/en/museus-e-monumentos/dgpc/m/torre-de-belem/",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%9E%D7%92%D7%93%D7%9C_%D7%91%D7%9C%D7%9D",
+                        short: "השומר של נהר הטז'ו וסמל עידן התגליות.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">היסטוריה ורקע</h4>
+                                    <p class="text-lg leading-relaxed">מגדל בלם (Torre de Belém) הוקם בין השנים 1514 ל-1520 תחת שלטונו של המלך מנואל הראשון. המגדל נבנה כחלק ממערכת הגנה על שפך נהר הטז'ו, אך מהר מאוד הפך לסמל של עידן התגליות הפורטוגזי. מכאן יצאו ספינותיהם של מגלי הארצות הגדולים אל הלא-נודע, והוא היה הדבר האחרון שהם ראו כשעזבו, והראשון שראו כשחזרו עם זהב ותבלינים מהמזרח.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">אדריכלות מנואלינית</h4>
+                                    <p class="text-lg leading-relaxed">המגדל הוא אחת הדוגמאות המובהקות ביותר לסגנון המנואליני - הגותיקה המאוחרת של פורטוגל. הסגנון מאופיין בעיטורים ימיים מורכבים המגולפים באבן גיר: חבלים, קשרים, אלמנטים של ספינות וסמלי המלוכה. המבנה מורכב משני חלקים: המבצר (הבאסטיון) הנמוך והמגדל המרובע המתנשא מעליו לגובה של 30 מטרים.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">חוויית הביקור</h4>
+                                    <p class="text-lg leading-relaxed">היום, המגדל הוא אתר מורשת עולמית של אונסק"ו. בביקור ניתן לעלות בגרם המדרגות הלולייני והצר אל הקומות העליונות ולצפות בנוף פנורמי מרהיב של הנהר ושל רובע בלם. המרפסות המעוטרות והצריחים הקטנים בסגנון מורי מעניקים למקום תחושה של טירה מהאגדות שצפה על פני המים.</p>
+                                </section>
+                            </div>
+                        `, 
+                        official: "https://www.visitlisboa.com/en/p/torre-de-belem",
+                        wiki: "https://en.wikipedia.org/wiki/Bel%C3%A9m_Tower",
                         emoji: "🗼" 
                     },
                     { 
                         name: "מנזר ז'רונימוש", 
-                        short: "יצירת מופת גותית.", 
-                        long: "מנזר מרהיב המייצג את עושרה של פורטוגל במאה ה-16, מקום קבורתו של וסקו דה גאמה.", 
+                        short: "שיא הפאר של האימפריה הפורטוגזית.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">היסטוריה מלכותית</h4>
+                                    <p class="text-lg leading-relaxed">מנזר ז'רונימוש (Mosteiro dos Jerónimos) הוא אחד המבנים המרשימים ביותר באירופה כולה. בנייתו החלה ב-1501 ונמשכה כ-100 שנים. הוא הוקם כדי לחגוג את חזרתו של וסקו דה גאמה מהודו ומומן באמצעות "מס התבלינים" - מס של 5% על כל הסחר שהגיע מהמזרח. המנזר הוענק למסדר הנזירים של הירונימוס הקדוש, שתפקידם היה להתפלל לשלומו של המלך ולמלחים שיצאו לים.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">פנינה אדריכלית</h4>
+                                    <p class="text-lg leading-relaxed">זהו שיאו של הסגנון המנואליני. חדר האוכל של הנזירים והקלויסטר (החצר הפנימית הדו-קומתית) הם מלאכת מחשבת של פיסול באבן. כל עמוד בחצר מעוטר בדגמים שונים של אלמוגים, חבלים ויצורי ים. הכנסייה הצמודה היא מבנה גותי רחב ידיים שבו נמצאים קבריהם המפוארים של המלך מנואל הראשון, וסקו דה גאמה והמשורר הלאומי קמואש.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">מדוע לבקר?</h4>
+                                    <p class="text-lg leading-relaxed">מעבר ליופי העוצר נשימה, זהו מקום שבו ניתן להרגיש את כוחה של פורטוגל כמעצמה עולמית. התקרה המרחפת של הכנסייה והאור החודר דרך הוויטראז'ים יוצרים אווירה של הוד והדר שאין לה אח ורע.</p>
+                                </section>
+                            </div>
+                        `, 
                         official: "https://www.mosteirojeronimos.gov.pt/en/",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%9E%D7%94%D7%9E%D7%A0%D7%96%D7%A8_%D7%96%27%D7%A8%D7%95%D7%A0%D7%99%D7%9E%D7%95%D7%A9",
+                        wiki: "https://en.wikipedia.org/wiki/Jer%C3%B3nimos_Monastery",
                         emoji: "⛪" 
                     },
                     { 
                         name: "רובע אלפאמה", 
-                        short: "הלב העתיק של העיר.", 
-                        long: "מבוך של סמטאות צרות, בתי פאדו ותצפיות נוף מרהיבות על הנהר.", 
+                        short: "הנשמה העתיקה של ליסבון ובית הפאדו.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">שורשים עמוקים</h4>
+                                    <p class="text-lg leading-relaxed">אלפאמה (Alfama) הוא הרובע העתיק ביותר בליסבון. מקור השם הוא במילה הערבית "אל-חמה" (המעיינות החמים). הרובע בנוי על תשתית סלעית קשיחה, מה שאפשר לו להיות האזור היחיד בעיר ששרד כמעט לחלוטין את רעידת האדמה והצונאמי הקטלני של 1755. הליכה בסמטאות היא חזרה בזמן לימי השלטון המורי בפורטוגל.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">תרבות הפאדו</h4>
+                                    <p class="text-lg leading-relaxed">אלפאמה היא המקום שבו נולדה מוזיקת הפאדו (Fado) - מוזיקה של געגועים (Saudade), עצב ותקווה. בערבים, סמטאות הרובע מתמלאות בצלילי הגיטרה הפורטוגזית הבוקעים מעשרות "בתי פאדו" קטנים. זוהי חוויה רגשית עמוקה שקשורה קשר הדוק לחיי המלחים והעוני שאפיינו את הרובע בעבר.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">מה רואים בסיבוב?</h4>
+                                    <p class="text-lg leading-relaxed">מבוך של סמטאות צרות שבהן כביסה תלויה בין המרפסות, חצרות פנימיות נסתרות, וכנסיות עתיקות. מומלץ לעצור בנקודות התצפית (Miradouros) הפזורות ברובע, כמו Santa Luzia, המציעות נוף עוצר נשימה של גגות הרעפים האדומים והנהר.</p>
+                                </section>
+                            </div>
+                        `, 
                         official: "https://www.visitlisboa.com/en/p/alfama",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%90%D7%9C%D7%A4%D7%90%D7%9E%D7%94",
+                        wiki: "https://en.wikipedia.org/wiki/Alfama",
                         emoji: "🎸" 
                     }
                 ]
             },
             "סינטרה": {
                 icon: "🏰", coords: { top: "65%", left: "10%" },
-                desc: "עיירת אגדות מלכותית בתוך יער עבות.",
+                desc: "עיירת אגדות מלכותית הטובלת בערפל וביערות, המקום שבו הטבע והדמיון נפגשים.",
                 attractions: [
                     { 
                         name: "ארמון פנה", 
-                        short: "ארמון צבעוני בראש ההר.", 
-                        long: "שילוב סגנונות נועז של צהוב ואדום, נחשב לאחד הארמונות היפים והמיוחדים באירופה.", 
+                        short: "הארמון הכי צבעוני ומצולם בעולם.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">חזון רומנטי</h4>
+                                    <p class="text-lg leading-relaxed">ארמון פנה (Palácio da Pena) נבנה על חורבות מנזר עתיק ביוזמתו של המלך פרדיננד השני, שהיה חובב אמנות וטבע. הארמון הושלם ב-1854 ונחשב לאחת הדוגמאות הטובות ביותר בעולם לאדריכלות רומנטית. המלך רצה ליצור מקום שישלב את כל הסגנונות שהוא אהב: מורי, מנואליני, גותי ורנסאנסי.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">העיצוב המהפנט</h4>
+                                    <p class="text-lg leading-relaxed">הדבר הראשון שבולט הוא הצבעים: צהוב עז ואדום-טרקוטה. הצבעים הללו היו דהויים במשך עשרות שנים עד שנצבעו מחדש בסוף המאה ה-20 ועוררו סערה בקרב התושבים, עד שהתברר שאלו הצבעים המקוריים. הארמון מלא בצריחים, כיפות מרוקאיות, ופסלים גרוטסקיים של יצורי ים.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">פארק פנה</h4>
+                                    <p class="text-לg leading-relaxed">הארמון מוקף בפארק עצום (2,000 דונם) שבו נטע המלך עצים מכל קצוות תבל: סקויה מאמריקה, שרכים מאוסטרליה וארזים מלבנון. הביקור בארמון מחייב הליכה ביער המסתורי שבו שבילים מתפתלים, אגמים וגשרים קטנים.</p>
+                                </section>
+                            </div>
+                        `, 
                         official: "https://www.parquesdesintra.pt/en/parks-and-monuments/park-and-palace-of-pena/",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%90%D7%A8%D7%9E%D7%95%D7%9F_%D7%A4%D7%A0%D7%94",
+                        wiki: "https://en.wikipedia.org/wiki/Pena_Palace",
                         emoji: "👑" 
                     },
                     { 
                         name: "קינטה דה רגאליירה", 
-                        short: "אחוזה מסתורית עם באר הפוכה.", 
-                        long: "אחוזה מלאה בסמלים אזוטריים, גנים מרהיבים ומערות סודיות.", 
+                        short: "אחוזה מסתורית מלאה בסמלי בנייה חופשית ואלכימיה.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">הסיפור מאחורי האחוזה</h4>
+                                    <p class="text-lg leading-relaxed">האחוזה נבנתה בתחילת המאה ה-20 עבור המיליונר אנטוניו מונטיירו, איש בעל ידע רב בפילוסופיה, אלכימיה ובנייה חופשית. הוא גייס את האדריכל האיטלקי לואיג'י מניני כדי לבנות מקום שיבטא את השקפת עולמו המסתורית. התוצאה היא "גן עדן אזוטרי" שבו כל סלע, עץ ומזרקה טומנים בחובם משמעות נסתרת.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">באר ההתקדשות</h4>
+                                    <p class="text-lg leading-relaxed">גולת הכותרת של המקום היא ללא ספק ה-Initiation Well. זוהי באר "הפוכה" - מגדל שיורד 27 מטרים לתוך האדמה עם גרם מדרגות לולייני בעל תשע קומות (כנגד תשעת מעגלי הגיהנום של דנטה). הבאר מעולם לא שימשה למים, אלא לטקסי התקדשות חשאיים. בתחתיתה נמצא סמל הצלב של מסדר הטמפלרים.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">חקר הגנים</h4>
+                                    <p class="text-lg leading-relaxed">השיטוט בגנים הוא חוויה של הרפתקה. תמצאו שם מערות חשוכות שניתן ללכת בהן (עם פנס!), גשרים מעל אגמים קטנים עם אבני מדרך במים, ומקדשים קטנים המעוטרים בסמלים מוזרים. זהו מקום שמעודד סקרנות ודמיון.</p>
+                                </section>
+                            </div>
+                        `, 
                         official: "https://www.regaleira.pt/en/",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%A7%D7%99%D7%A0%D7%98%D7%94_%D7%93%D7%94_%D7%A8%D7%92%D7%90%D7%9C%D7%99%D7%99%D7%A8%D7%94",
+                        wiki: "https://en.wikipedia.org/wiki/Quinta_da_Regaleira",
                         emoji: "🌳" 
                     }
                 ]
             },
             "קואימברה": {
                 icon: "🎓", coords: { top: "45%", left: "25%" },
-                desc: "בירה עתיקה ומרכז אקדמי עולמי.",
+                desc: "בירתה העתיקה של פורטוגל וביתה של אחת האוניברסיטאות הפעילות הוותיקות בעולם.",
                 attractions: [
                     { 
                         name: "אוניברסיטת קואימברה", 
-                        short: "הספרייה המפוארת והקמפוס העתיק.", 
-                        long: "אחת האוניברסיטאות העתיקות בעולם, ביתה של ספריית ז'ואנינה הבארוקית המרהיבה.", 
+                        short: "היסטוריה אקדמית מפוארת וספריה שאין דומה לה.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">מסורת בת מאות שנים</h4>
+                                    <p class="text-lg leading-relaxed">האוניברסיטה הוקמה במקור בליסבון ב-1290 והועברה סופית לקואימברה ב-1537 על ידי המלך ז'ואאו השלישי. היא שוכנת בארמון מלכותי לשעבר וממוקמת בנקודה הגבוהה ביותר בעיר. הסטודנטים כאן עדיין לובשים גלימות שחורות מסורתיות (Traje Académico), שהיוו השראה למדים של הוגוורטס בספרי הארי פוטר.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">ספריית ז'ואנינה</h4>
+                                    <p class="text-lg leading-relaxed">זוהי אחת הספריות היפות והמפורסמות בעולם. היא נבנתה במאה ה-18 בסגנון בארוק עשיר במיוחד. הקירות מכוסים במדפי עץ אקזוטי מגולף ומצופה זהב, והתקרה מעוטרת בציורי אשליה מרהיבים. הספרייה מכילה כ-250,000 ספרים עתיקים. עובדה מרתקת: בספרייה חיה מושבת עטלפים שתפקידה לאכול חרקים שעלולים להזיק לספרים.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">מגדל השעון והחצר</h4>
+                                    <p class="text-lg leading-relaxed">החצר המרכזית הגדולה (Pátio das Escolas) מוקפת במבנים היסטוריים, ובראשה ניצב מגדל השעון המפורסם המכונה "A Cabra" (העז). הצלצול של המגדל סימן במשך מאות שנים את תחילת הלימודים ואת שעת העוצר לסטודנטים.</p>
+                                </section>
+                            </div>
+                        `, 
                         official: "https://www.uc.pt/en/turismo/",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%90%D7%95%D7%A0%D7%99%D7%91%D7%A8%D7%A1%D7%99%D7%98%D7%AA_%D7%A7%D7%95%D7%90%D7%99%D7%95%D7%9E%D7%91%D7%A8%D7%94",
+                        wiki: "https://en.wikipedia.org/wiki/University_of_Coimbra",
                         emoji: "📚" 
                     }
                 ]
             },
             "פורטו": {
                 icon: "🍷", coords: { top: "25%", left: "28%" },
-                desc: "עיר היין, הגשרים והבתים הצבעוניים.",
+                desc: "עיר היין, הגשרים והבתים הצבעוניים הגולשים אל נהר הדואורו, המשלבת חוסן תעשייתי עם יופי פואטי.",
                 attractions: [
                     { 
                         name: "גשר דום לואיס הראשון", 
-                        short: "גשר פלדה אייקוני.", 
-                        long: "מחבר בין פורטו לוילה נובה דה גאיה ומציע נוף פנורמי מרהיב על נהר הדואורו.", 
+                        short: "יצירת מופת של פלדה המחברת בין עיר היין לעיר העתיקה.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">הקשר לאייפל</h4>
+                                    <p class="text-lg leading-relaxed">הגשר נחנך ב-1886 ותוכנן על ידי תיאופיל סייריג, שהיה שותפו ותלמידו של גוסטב אייפל. ניתן לראות את הדמיון המובהק בשימוש בקונסטרוקציות הפלדה המורכבות. הגשר החליף גשר תלוי ישן שהיה צר מדי לצרכי העיר הגדלה.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">מבנה ייחודי</h4>
+                                    <p class="text-lg leading-relaxed">לגשר שתי קומות (Decks): הקומה העליונה משמשת היום את הרכבת הקלה (Metro) והולכי רגל, והיא מציעה את הנוף המרהיב ביותר על פורטו וגדת הריביירה. הקומה התחתונה מיועדת לרכבים והולכי רגל ומחברת ישירות בין רובע הריביירה בפורטו למרתפי יין הפורט בווילה נובה דה גאיה.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">השפעה תרבותית</h4>
+                                    <p class="text-lg leading-relaxed">הגשר הוא הלב הפועם של העיר. בקיץ ניתן לראות צעירים מקומיים קופצים מהקומה התחתונה של הגשר אל מי נהר הדואורו (אל תנסו את זה!). בשקיעה, הגשר הופך לנקודת התצפית הפופולרית ביותר בעיר, כשהוא נצבע בגווני זהב וכתום.</p>
+                                </section>
+                            </div>
+                        `, 
                         official: "https://www.visitportugal.com/en/node/73740",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%92%D7%A9%D7%A8_%D7%93%D7%95%D7%9D_%D7%9C%D7%95%D5%90%D7%99%D7%A1_%D7%94%D7%A8%D7%90%D7%A9%D7%95%D7%9F",
+                        wiki: "https://en.wikipedia.org/wiki/Dom_Lu%C3%ADs_I_Bridge",
                         emoji: "🌉" 
                     },
                     { 
                         name: "חנות הספרים ללו", 
-                        short: "השראה להארי פוטר.", 
-                        long: "חנות ספרים מדהימה עם גרם מדרגות מורכב ותקרת ויטראז', נחשבת לאחת היפות בעולם.", 
+                        short: "חנות הספרים המרהיבה בעולם והשראה לקסם של הארי פוטר.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">אדריכלות ניאו-גותית</h4>
+                                    <p class="text-lg leading-relaxed">Livraria Lello נפתחה ב-1906 בבניין מרהיב המשלב אלמנטים ניאו-גותיים ואר-נובו. חזית הבניין המעוטרת בציורים המייצגים את המדע והאמנות היא רק הקדמה למה שמחכה בפנים. התקרה עשויה ויטראז' ענק עם הכיתוב "Decus in Labore" (כבוד בעבודה).</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">המדרגות האדומות</h4>
+                                    <p class="text-lg leading-relaxed">מרכז החנות נשלט על ידי גרם מדרגות מתפתל ומרשים בצבע אדום עז. המדרגות נראות כאילו הן עשויות עץ מגולף, אך למעשה הן עשויות בטון מזוין - טכניקה חדשנית לתקופתה. המבנה המורכב והמעוגל שלהן יוצר תחושה של תנועה וקסם בתוך החלל העמוס בספרים.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">מיתוס הארי פוטר</h4>
+                                    <p class="text-lg leading-relaxed">ג'יי קיי רולינג חיה בפורטו בתחילת שנות ה-90 ולימדה שם אנגלית. היא נהגה לבקר בחנות לעיתים קרובות. מעריצים רבים מוצאים דמיון רב בין המדרגות המפותלות והמדפים הגבוהים לבין חנות הספרים "כרך ודף" או הספרייה בהוגוורטס. למרות שהסופרת הכחישה לאחרונה שהחנות הייתה השראה ישירה, הקסם המקום בלתי ניתן להכחשה.</p>
+                                </section>
+                            </div>
+                        `, 
                         official: "https://www.livrarialello.pt/en-gb/",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%9C%D7%9C%D7%95_(%D7%97%D7%A0%D7%95%D7%AA_%D7%A1%D7%A4%D7%A8%D7%99%D7%9D)",
+                        wiki: "https://en.wikipedia.org/wiki/Livraria_Lello",
                         emoji: "📖" 
                     }
                 ]
             },
             "בראגה": {
                 icon: "⛪", coords: { top: "15%", left: "32%" },
-                desc: "הלב הדתי והרוחני של המדינה.",
+                desc: "הבירה הדתית של פורטוגל, עיר מלאה בכנסיות, גנים ורוחניות עתיקה.",
                 attractions: [
                     { 
                         name: "בום ז'זוש דו מונטה", 
-                        short: "גרם מדרגות בארוקי עצום.", 
-                        long: "אתר עלייה לרגל המפורסם במדרגותיו המרשימות המייצגות את דרך הייסורים.", 
+                        short: "עלייה לרגל בדרך המדרגות המרהיבה באירופה.", 
+                        long: `
+                            <div class="space-y-10">
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">משמעות דתית</h4>
+                                    <p class="text-lg leading-relaxed">בום ז'זוש דו מונטה (Bom Jesus do Monte) הוא אתר עלייה לרגל המייצג את "ההר הקדוש". האתר כולו הוא אלגוריה לדרך הייסורים של ישו. המאמינים עולים במדרגות (לפעמים על הברכיים) כפעולה של כפרה וטיהור בדרך אל הכנסייה הניצבת בפסגה.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">מדרגות חמשת החושים</h4>
+                                    <p class="text-lg leading-relaxed">גרם המדרגות הבארוקי הוא יצירת מופת. הוא מחולק למספר חלקים, כשהמפורסם שבהם הוא "מדרגות חמשת החושים". כל רמה מוקדשת לחוש אחר (ראייה, שמיעה, ריח, טעם ומגע) וכוללת מזרקה המתיזה מים מהאיבר המתאים (למשל, מזרקת הראייה מתיזה מים מהעיניים של הפסל). זהו שילוב מרתק בין אמנות דתית לתיאטרליות בארוקית.</p>
+                                </section>
+                                <section>
+                                    <h4 class="text-2xl font-bold text-slate-800 mb-4">פוניקולר המים</h4>
+                                    <p class="text-lg leading-relaxed">לצד המדרגות פועל פוניקולר (רכבת כבלים) שנחנך ב-1882. זהו הפוניקולר הוותיק ביותר בעולם שעדיין פועל באמצעות כוח המים בלבד. המערכת משתמשת במשקל המים (ממלאים מיכל בקרון העליון ומרוקנים בתחתון) כדי להניע את הקרונות. זוהי פנינה הנדסית ירוקה עוד לפני שהמושג היה קיים.</p>
+                                </section>
+                            </div>
+                        `, 
                         official: "https://bomjesus.pt/en/",
-                        wiki: "https://he.wikipedia.org/wiki/%D7%91%D7%95%D7%9D_%D7%96%27%D7%96%D7%95%D7%A9_%D7%93%D7%95_%D7%9D%D7%95%D7%A0%D7%98%D7%94",
+                        wiki: "https://en.wikipedia.org/wiki/Bom_Jesus_do_Monte",
                         emoji: "🛤️" 
                     }
                 ]
@@ -226,6 +385,7 @@
         };
 
         let currentCity = "ליסבון";
+        let isFullPage = false;
 
         function initMap() {
             const map = document.getElementById('interactive-map');
@@ -251,7 +411,7 @@
             const container = document.getElementById('city-tabs');
             Object.keys(reportData).forEach(city => {
                 const btn = document.createElement('button');
-                btn.className = `tab-btn px-6 py-2 rounded-full font-bold border-2 border-slate-200 bg-white transition-all ${city === currentCity ? 'active' : ''}`;
+                btn.className = `tab-btn px-8 py-3 rounded-full font-bold border-2 border-slate-200 bg-white shadow-sm transition-all hover:border-orange-200 ${city === currentCity ? 'active' : ''}`;
                 btn.innerHTML = `${reportData[city].icon} ${city}`;
                 btn.onclick = () => selectCity(city);
                 container.appendChild(btn);
@@ -264,12 +424,16 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(city)));
             const area = document.getElementById('city-content-area');
             area.classList.remove('opacity-100', 'translate-y-0');
-            area.classList.add('opacity-0', 'translate-y-4');
+            area.classList.add('opacity-0', 'translate-y-6');
             setTimeout(() => {
                 renderCityContent();
-                area.classList.remove('opacity-0', 'translate-y-4');
+                area.classList.remove('opacity-0', 'translate-y-6');
                 area.classList.add('opacity-100', 'translate-y-0');
-            }, 300);
+            }, 350);
+
+            if (window.innerWidth < 1024) {
+                document.getElementById('explorer').scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
         function renderCityContent() {
@@ -280,13 +444,16 @@
             grid.innerHTML = '';
             data.attractions.forEach((attr, idx) => {
                 const card = document.createElement('div');
-                card.className = 'site-card bg-white rounded-3xl p-6 border border-slate-100 shadow-md transition-all cursor-pointer group flex flex-col h-full';
+                card.className = 'site-card bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-lg transition-all cursor-pointer group flex flex-col h-full text-right';
                 card.onclick = () => openModal(currentCity, idx);
                 card.innerHTML = `
-                    <div class="text-4xl mb-6 bg-slate-50 w-20 h-20 rounded-2xl flex items-center justify-center group-hover:bg-orange-50 transition-colors">${attr.emoji}</div>
-                    <h4 class="text-2xl font-bold text-slate-800 mb-3">${attr.name}</h4>
-                    <p class="text-slate-600 mb-6 flex-grow">${attr.short}</p>
-                    <div class="text-orange-600 font-bold flex items-center gap-2">למידע נוסף וקישורים ←</div>
+                    <div class="text-5xl mb-8 bg-orange-50 w-24 h-24 rounded-3xl flex items-center justify-center group-hover:bg-orange-100 transition-colors mx-auto md:mx-0 shadow-inner">${attr.emoji}</div>
+                    <h4 class="text-3xl font-bold text-slate-800 mb-4 tracking-tight">${attr.name}</h4>
+                    <p class="text-slate-600 mb-8 flex-grow leading-relaxed text-lg">${attr.short}</p>
+                    <div class="text-orange-600 font-bold flex items-center gap-3 text-lg group-hover:gap-5 transition-all">
+                        <span>למאמר המלא והמעמיק</span>
+                        <span class="text-2xl">←</span>
+                    </div>
                 `;
                 grid.appendChild(card);
             });
@@ -295,47 +462,62 @@
         function openModal(city, idx) {
             const attr = reportData[city].attractions[idx];
             const modalBody = document.getElementById('modal-body-content');
+            document.getElementById('modal-mini-title').innerText = attr.name;
             
+            let buttonsHtml = '';
+            if (attr.official) {
+                buttonsHtml += `
+                    <a href="${attr.official}" target="_blank" class="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-200 hover:border-orange-500 hover:bg-orange-50 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <span class="text-3xl">🌐</span>
+                            <span class="font-bold text-slate-700 group-hover:text-orange-900 text-lg">לאתר הרשמי</span>
+                        </div>
+                        <span class="text-slate-400 group-hover:text-orange-600 group-hover:translate-x-[-6px] transition-all text-xl">←</span>
+                    </a>
+                `;
+            }
+            if (attr.wiki) {
+                buttonsHtml += `
+                    <a href="${attr.wiki}" target="_blank" class="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <span class="text-3xl">📖</span>
+                            <span class="font-bold text-slate-700 group-hover:text-blue-900 text-lg">Wikipedia (EN)</span>
+                        </div>
+                        <span class="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-[-6px] transition-all text-xl">←</span>
+                    </a>
+                `;
+            }
+
             modalBody.innerHTML = `
-                <div class="p-8 space-y-8">
-                    <div class="flex items-center gap-6">
-                        <div class="w-20 h-20 bg-orange-50 rounded-2xl flex items-center justify-center text-5xl shadow-sm border border-orange-100">
+                <div id="content-container" class="p-8 md:p-12 space-y-12">
+                    <div class="flex flex-col md:flex-row items-center gap-8 justify-start border-b border-slate-100 pb-10">
+                        <div class="w-32 h-32 bg-orange-50 rounded-[2.5rem] flex items-center justify-center text-7xl shadow-inner border border-orange-100 shrink-0">
                             ${attr.emoji}
                         </div>
-                        <div>
-                            <h2 class="text-3xl font-black text-slate-800">${attr.name}</h2>
-                            <p class="text-orange-600 font-bold">${city}, פורטוגל</p>
+                        <div class="text-center md:text-right">
+                            <h2 class="text-5xl font-black text-slate-800 mb-2">${attr.name}</h2>
+                            <p class="text-orange-600 font-bold text-2xl">${city}, פורטוגל</p>
                         </div>
                     </div>
 
-                    <div class="space-y-4">
-                        <h3 class="text-lg font-bold text-slate-800 border-b pb-2">על האתר</h3>
-                        <p class="text-xl text-slate-700 leading-relaxed text-justify">${attr.long}</p>
+                    <div class="prose prose-lg max-w-none text-right">
+                        ${attr.long}
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <a href="${attr.official}" target="_blank" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200 hover:border-orange-500 hover:bg-orange-50 transition-all group">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">🌐</span>
-                                <span class="font-bold text-slate-700 group-hover:text-orange-900">האתר הרשמי</span>
-                            </div>
-                            <span class="text-slate-400 group-hover:text-orange-600 group-hover:translate-x-[-4px] transition-all">←</span>
-                        </a>
-                        <a href="${attr.wiki}" target="_blank" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all group">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">📖</span>
-                                <span class="font-bold text-slate-700 group-hover:text-blue-900">ויקיפדיה</span>
-                            </div>
-                            <span class="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-[-4px] transition-all">←</span>
-                        </a>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${buttonsHtml}
                     </div>
 
-                    <div class="bg-blue-50 p-6 rounded-2xl flex items-start gap-4 border-r-4 border-blue-500 shadow-sm">
-                        <span class="text-2xl">💡</span>
+                    <div class="bg-blue-50 p-8 rounded-[2rem] flex items-start gap-6 border-r-8 border-blue-500 shadow-md">
+                        <span class="text-4xl">💡</span>
                         <div>
-                            <p class="text-blue-900 font-bold mb-1">טיפ חשוב</p>
-                            <p class="text-blue-800 text-sm leading-relaxed">מומלץ תמיד לבדוק את שעות הפתיחה העדכניות באתר הרשמי לפני ההגעה, שכן הן עשויות להשתנות בחגים ואירועים מקומיים.</p>
+                            <p class="text-blue-900 font-bold text-xl mb-2">טיפ מתוך הניסיון שלנו</p>
+                            <p class="text-blue-800 text-lg leading-relaxed">המידע במדריך זה מבוסס על מקורות היסטוריים ואדריכליים. מומלץ תמיד לבדוק את האתר הרשמי לשינויים בשעות הפעילות, ולקרוא בויקיפדיה באנגלית למידע נוסף ומפורט אפילו יותר.</p>
                         </div>
+                    </div>
+                    
+                    <div class="pt-16 text-center opacity-40 text-slate-400 text-lg italic border-t border-slate-50">
+                        
                     </div>
                 </div>
             `;
@@ -349,15 +531,39 @@
         }
 
         function closeModal() {
+            isFullPage = false;
+            const modal = document.getElementById('modal-content');
+            modal.classList.remove('modal-full');
+            document.getElementById('content-container')?.classList.remove('full-page-content');
+            document.getElementById('expand-icon').innerText = "⛶";
             document.body.classList.remove('modal-open');
             const overlay = document.getElementById('modal-overlay');
             overlay.classList.remove('opacity-100');
             overlay.classList.add('opacity-0', 'invisible');
-            document.getElementById('modal-content').classList.remove('scale-100');
-            document.getElementById('modal-content').classList.add('scale-95');
+            modal.classList.remove('scale-100');
+            modal.classList.add('scale-95');
         }
 
-        window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+        function toggleFullPage() {
+            isFullPage = !isFullPage;
+            const modal = document.getElementById('modal-content');
+            const container = document.getElementById('content-container');
+            const icon = document.getElementById('expand-icon');
+            
+            if (isFullPage) {
+                modal.classList.add('modal-full');
+                container.classList.add('full-page-content');
+                icon.innerText = "❐";
+            } else {
+                modal.classList.remove('modal-full');
+                container.classList.remove('full-page-content');
+                icon.innerText = "⛶";
+            }
+        }
+
+        window.addEventListener('keydown', e => { 
+            if (e.key === 'Escape') closeModal(); 
+        });
 
         function initChart() {
             const ctx = document.getElementById('attractionsChart').getContext('2d');
@@ -365,13 +571,39 @@
                 type: 'bar',
                 data: {
                     labels: Object.keys(reportData),
-                    datasets: [{ data: Object.keys(reportData).map(c => reportData[c].attractions.length), backgroundColor: '#ea580c', borderRadius: 10 }]
+                    datasets: [{ 
+                        data: Object.keys(reportData).map(c => reportData[c].attractions.length), 
+                        backgroundColor: '#ea580c', 
+                        borderRadius: 15,
+                        hoverBackgroundColor: '#9a3412'
+                    }]
                 },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            titleFont: { family: 'Heebo', size: 16 },
+                            bodyFont: { family: 'Heebo', size: 14 },
+                            padding: 12,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, grid: { display: false }, ticks: { font: { family: 'Heebo' } } },
+                        y: { grid: { display: false }, ticks: { font: { family: 'Heebo', size: 16, weight: 'bold' } } }
+                    }
+                }
             });
         }
 
-        document.addEventListener('DOMContentLoaded', () => { initMap(); initTabs(); initChart(); });
+        document.addEventListener('DOMContentLoaded', () => { 
+            initMap(); 
+            initTabs(); 
+            initChart(); 
+        });
     </script>
 </body>
 </html>
