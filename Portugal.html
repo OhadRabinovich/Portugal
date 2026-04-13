@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פורטוגל האינטראקטיבית - מקורות ומידע רשמי</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Heebo', sans-serif; background-color: #faf8f5; color: #1e293b; scroll-behavior: smooth; }
+        .tab-btn.active { background-color: #ea580c; color: white; border-color: #ea580c; transform: scale(1.05); }
+        .site-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .chart-container { position: relative; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; height: 300px; max-height: 350px; }
+        
+        .map-container { position: relative; width: 100%; max-width: 400px; height: 500px; background: #e2e8f0; border-radius: 2rem; margin: auto; overflow: hidden; border: 8px solid white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .map-coast { position: absolute; left: 0; top: 0; width: 60%; height: 100%; background: #f1f5f9; border-right: 4px dashed #cbd5e1; }
+        .map-dot { position: absolute; width: 16px; height: 16px; background: #ea580c; border-radius: 50%; cursor: pointer; transition: all 0.3s; z-index: 20; border: 3px solid white; box-shadow: 0 0 10px rgba(234, 88, 12, 0.5); }
+        .map-dot:hover { transform: scale(1.5); background: #9a3412; }
+        .map-label { position: absolute; font-size: 0.875rem; font-weight: bold; color: #1e293b; white-space: nowrap; pointer-events: none; }
+
+        #modal-overlay { transition: opacity 0.3s ease, visibility 0.3s ease; }
+        #modal-content { transition: transform 0.3s ease; }
+        .modal-open { overflow: hidden; }
+
+        @media (max-width: 768px) { .map-container { height: 400px; } }
+    </style>
+    <!-- Chosen Palette: Warm Iberian (Off-white background #faf8f5, Slate text #1e293b, Terracotta accent #ea580c) -->
+    <!-- Application Structure Plan: Information-rich explorer focusing on official sources. Replaced image generation with direct links to Wikipedia and official websites for maximum reliability. Structure: Map context -> City Selection -> Attraction deep-dive via modal with external resources. -->
+    <!-- Visualization & Content Choices: CSS Map (No SVG), Bar Chart (Chart.js), Dynamic Modals with resource links. Prioritizes informational accuracy over visual generation. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased selection:bg-orange-200">
+
+    <!-- Modal for Detailed Information -->
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-900/90 z-[100] opacity-0 invisible flex items-center justify-center p-4">
+        <div class="absolute inset-0" onclick="closeModal()"></div>
+        
+        <div id="modal-content" class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl transform scale-95 relative z-[110]">
+            <button onclick="closeModal()" class="absolute top-4 left-4 bg-slate-800 text-white hover:bg-slate-700 p-2 rounded-full transition-all z-[150] shadow-xl w-10 h-10 flex items-center justify-center">
+                <span class="text-xl font-bold">✕</span>
+            </button>
+            <div id="modal-body-content">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <header class="bg-gradient-to-br from-slate-900 via-slate-800 to-orange-900 text-white py-20 px-6 text-center shadow-lg relative">
+        <div class="max-w-4xl mx-auto relative z-10">
+            <span class="inline-block px-4 py-1 bg-orange-600/30 rounded-full text-orange-400 text-sm font-bold mb-4 tracking-widest uppercase">פורטוגל 2026 - מדריך רשמי</span>
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">מסע בין אריחים וארמונות</h1>
+            <p class="text-xl md:text-2xl font-light text-slate-300 max-w-2xl mx-auto leading-relaxed">גלו את פורטוגל דרך מפה אינטראקטיבית וגישה ישירה למקורות המידע הרשמיים של כל אתר.</p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-16 space-y-24">
+
+        <!-- Navigation Map -->
+        <section id="geo-navigation" class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6 text-right order-2 lg:order-1">
+                <h2 class="text-4xl font-black text-slate-800 leading-tight">ניווט גיאוגרפי</h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    בחרו נקודה על המפה כדי להתחיל את המסע. כל עיר בפורטוגל מציעה אופי ייחודי - מהבירה הקוסמופוליטית ועד לצפון ההיסטורי והדתי.
+                </p>
+                <div class="p-6 bg-orange-50 rounded-2xl border-r-4 border-orange-500">
+                    <p class="text-orange-900 font-bold">שימוש ביישום:</p>
+                    <p class="text-orange-800 text-sm">הקליקו על אתר לקבלת הסבר מורחב וקישורים לאתרים הרשמיים ולויקיפדיה.</p>
+                </div>
+            </div>
+            
+            <div class="order-1 lg:order-2">
+                <div class="map-container" id="interactive-map">
+                    <div class="map-coast"></div>
+                    <!-- Dots will be injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <section id="explorer" class="bg-white rounded-[3rem] shadow-2xl p-8 md:p-12 border border-slate-100 relative overflow-hidden">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-slate-800 mb-4">סייר האטרקציות</h2>
+                <div class="flex flex-wrap justify-center gap-3 mt-8" id="city-tabs">
+                </div>
+            </div>
+
+            <div id="city-content-area" class="transition-all duration-500 opacity-0 translate-y-4">
+                <div class="mb-12">
+                    <h3 id="city-title" class="text-4xl font-black text-slate-800 mb-4"></h3>
+                    <p id="city-desc" class="text-xl text-slate-600 leading-relaxed"></p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="attractions-grid">
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center bg-slate-50 p-12 rounded-[3rem]">
+            <div class="lg:col-span-1">
+                <h2 class="text-3xl font-bold text-slate-800">התפלגות אתרי חובה</h2>
+                <p class="text-slate-600">ניתוח כמותי של אתרי התיירות המרכזיים המוצגים ביישום לפי עיר.</p>
+            </div>
+            <div class="lg:col-span-2 chart-container">
+                <canvas id="attractionsChart"></canvas>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-white py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="text-right">
+                <h4 class="text-2xl font-bold text-orange-500 mb-2">פורטוגל האינטראקטיבית</h4>
+                <p class="text-slate-400 italic">כל המידע הרשמי במקום אחד.</p>
+            </div>
+            <div class="text-slate-500 text-sm">© 2026 כל הזכויות שמורות.</div>
+        </div>
+    </footer>
+
+    <script>
+        const reportData = {
+            "ליסבון": {
+                icon: "🚋", coords: { top: "70%", left: "15%" },
+                desc: "עיר הבירה הקסומה של פורטוגל, הבנויה על שבע גבעות.",
+                attractions: [
+                    { 
+                        name: "מגדל בלם", 
+                        short: "מגדל מבוצר מהמאה ה-16.", 
+                        long: "מגדל בלם הוא סמל של עידן התגליות הפורטוגזי, יצירת מופת בסגנון מנואליני הממוקמת על גדת נהר הטז'ו.", 
+                        official: "https://www.patrimoniocultural.gov.pt/en/museus-e-monumentos/dgpc/m/torre-de-belem/",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%9E%D7%92%D7%93%D7%9C_%D7%91%D7%9C%D7%9D",
+                        emoji: "🗼" 
+                    },
+                    { 
+                        name: "מנזר ז'רונימוש", 
+                        short: "יצירת מופת גותית.", 
+                        long: "מנזר מרהיב המייצג את עושרה של פורטוגל במאה ה-16, מקום קבורתו של וסקו דה גאמה.", 
+                        official: "https://www.mosteirojeronimos.gov.pt/en/",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%9E%D7%94%D7%9E%D7%A0%D7%96%D7%A8_%D7%96%27%D7%A8%D7%95%D7%A0%D7%99%D7%9E%D7%95%D7%A9",
+                        emoji: "⛪" 
+                    },
+                    { 
+                        name: "רובע אלפאמה", 
+                        short: "הלב העתיק של העיר.", 
+                        long: "מבוך של סמטאות צרות, בתי פאדו ותצפיות נוף מרהיבות על הנהר.", 
+                        official: "https://www.visitlisboa.com/en/p/alfama",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%90%D7%9C%D7%A4%D7%90%D7%9E%D7%94",
+                        emoji: "🎸" 
+                    }
+                ]
+            },
+            "סינטרה": {
+                icon: "🏰", coords: { top: "65%", left: "10%" },
+                desc: "עיירת אגדות מלכותית בתוך יער עבות.",
+                attractions: [
+                    { 
+                        name: "ארמון פנה", 
+                        short: "ארמון צבעוני בראש ההר.", 
+                        long: "שילוב סגנונות נועז של צהוב ואדום, נחשב לאחד הארמונות היפים והמיוחדים באירופה.", 
+                        official: "https://www.parquesdesintra.pt/en/parks-and-monuments/park-and-palace-of-pena/",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%90%D7%A8%D7%9E%D7%95%D7%9F_%D7%A4%D7%A0%D7%94",
+                        emoji: "👑" 
+                    },
+                    { 
+                        name: "קינטה דה רגאליירה", 
+                        short: "אחוזה מסתורית עם באר הפוכה.", 
+                        long: "אחוזה מלאה בסמלים אזוטריים, גנים מרהיבים ומערות סודיות.", 
+                        official: "https://www.regaleira.pt/en/",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%A7%D7%99%D7%A0%D7%98%D7%94_%D7%93%D7%94_%D7%A8%D7%92%D7%90%D7%9C%D7%99%D7%99%D7%A8%D7%94",
+                        emoji: "🌳" 
+                    }
+                ]
+            },
+            "קואימברה": {
+                icon: "🎓", coords: { top: "45%", left: "25%" },
+                desc: "בירה עתיקה ומרכז אקדמי עולמי.",
+                attractions: [
+                    { 
+                        name: "אוניברסיטת קואימברה", 
+                        short: "הספרייה המפוארת והקמפוס העתיק.", 
+                        long: "אחת האוניברסיטאות העתיקות בעולם, ביתה של ספריית ז'ואנינה הבארוקית המרהיבה.", 
+                        official: "https://www.uc.pt/en/turismo/",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%90%D7%95%D7%A0%D7%99%D7%91%D7%A8%D7%A1%D7%99%D7%98%D7%AA_%D7%A7%D7%95%D7%90%D7%99%D7%95%D7%9E%D7%91%D7%A8%D7%94",
+                        emoji: "📚" 
+                    }
+                ]
+            },
+            "פורטו": {
+                icon: "🍷", coords: { top: "25%", left: "28%" },
+                desc: "עיר היין, הגשרים והבתים הצבעוניים.",
+                attractions: [
+                    { 
+                        name: "גשר דום לואיס הראשון", 
+                        short: "גשר פלדה אייקוני.", 
+                        long: "מחבר בין פורטו לוילה נובה דה גאיה ומציע נוף פנורמי מרהיב על נהר הדואורו.", 
+                        official: "https://www.visitportugal.com/en/node/73740",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%92%D7%A9%D7%A8_%D7%93%D7%95%D7%9D_%D7%9C%D7%95%D5%90%D7%99%D7%A1_%D7%94%D7%A8%D7%90%D7%A9%D7%95%D7%9F",
+                        emoji: "🌉" 
+                    },
+                    { 
+                        name: "חנות הספרים ללו", 
+                        short: "השראה להארי פוטר.", 
+                        long: "חנות ספרים מדהימה עם גרם מדרגות מורכב ותקרת ויטראז', נחשבת לאחת היפות בעולם.", 
+                        official: "https://www.livrarialello.pt/en-gb/",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%9C%D7%9C%D7%95_(%D7%97%D7%A0%D7%95%D7%AA_%D7%A1%D7%A4%D7%A8%D7%99%D7%9D)",
+                        emoji: "📖" 
+                    }
+                ]
+            },
+            "בראגה": {
+                icon: "⛪", coords: { top: "15%", left: "32%" },
+                desc: "הלב הדתי והרוחני של המדינה.",
+                attractions: [
+                    { 
+                        name: "בום ז'זוש דו מונטה", 
+                        short: "גרם מדרגות בארוקי עצום.", 
+                        long: "אתר עלייה לרגל המפורסם במדרגותיו המרשימות המייצגות את דרך הייסורים.", 
+                        official: "https://bomjesus.pt/en/",
+                        wiki: "https://he.wikipedia.org/wiki/%D7%91%D7%95%D7%9D_%D7%96%27%D7%96%D7%95%D7%A9_%D7%93%D7%95_%D7%9D%D7%95%D7%A0%D7%98%D7%94",
+                        emoji: "🛤️" 
+                    }
+                ]
+            }
+        };
+
+        let currentCity = "ליסבון";
+
+        function initMap() {
+            const map = document.getElementById('interactive-map');
+            Object.keys(reportData).forEach(city => {
+                const data = reportData[city];
+                const dot = document.createElement('div');
+                dot.className = 'map-dot';
+                dot.style.top = data.coords.top; dot.style.left = data.coords.left;
+                dot.onclick = () => selectCity(city);
+                
+                const label = document.createElement('div');
+                label.className = 'map-label';
+                label.style.top = `calc(${data.coords.top} - 25px)`;
+                label.style.left = `calc(${data.coords.left} + 20px)`;
+                label.innerText = city;
+
+                map.appendChild(dot);
+                map.appendChild(label);
+            });
+        }
+
+        function initTabs() {
+            const container = document.getElementById('city-tabs');
+            Object.keys(reportData).forEach(city => {
+                const btn = document.createElement('button');
+                btn.className = `tab-btn px-6 py-2 rounded-full font-bold border-2 border-slate-200 bg-white transition-all ${city === currentCity ? 'active' : ''}`;
+                btn.innerHTML = `${reportData[city].icon} ${city}`;
+                btn.onclick = () => selectCity(city);
+                container.appendChild(btn);
+            });
+            renderCityContent();
+        }
+
+        function selectCity(city) {
+            currentCity = city;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(city)));
+            const area = document.getElementById('city-content-area');
+            area.classList.remove('opacity-100', 'translate-y-0');
+            area.classList.add('opacity-0', 'translate-y-4');
+            setTimeout(() => {
+                renderCityContent();
+                area.classList.remove('opacity-0', 'translate-y-4');
+                area.classList.add('opacity-100', 'translate-y-0');
+            }, 300);
+        }
+
+        function renderCityContent() {
+            const data = reportData[currentCity];
+            document.getElementById('city-title').innerText = currentCity;
+            document.getElementById('city-desc').innerText = data.desc;
+            const grid = document.getElementById('attractions-grid');
+            grid.innerHTML = '';
+            data.attractions.forEach((attr, idx) => {
+                const card = document.createElement('div');
+                card.className = 'site-card bg-white rounded-3xl p-6 border border-slate-100 shadow-md transition-all cursor-pointer group flex flex-col h-full';
+                card.onclick = () => openModal(currentCity, idx);
+                card.innerHTML = `
+                    <div class="text-4xl mb-6 bg-slate-50 w-20 h-20 rounded-2xl flex items-center justify-center group-hover:bg-orange-50 transition-colors">${attr.emoji}</div>
+                    <h4 class="text-2xl font-bold text-slate-800 mb-3">${attr.name}</h4>
+                    <p class="text-slate-600 mb-6 flex-grow">${attr.short}</p>
+                    <div class="text-orange-600 font-bold flex items-center gap-2">למידע נוסף וקישורים ←</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openModal(city, idx) {
+            const attr = reportData[city].attractions[idx];
+            const modalBody = document.getElementById('modal-body-content');
+            
+            modalBody.innerHTML = `
+                <div class="p-8 space-y-8">
+                    <div class="flex items-center gap-6">
+                        <div class="w-20 h-20 bg-orange-50 rounded-2xl flex items-center justify-center text-5xl shadow-sm border border-orange-100">
+                            ${attr.emoji}
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-black text-slate-800">${attr.name}</h2>
+                            <p class="text-orange-600 font-bold">${city}, פורטוגל</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-bold text-slate-800 border-b pb-2">על האתר</h3>
+                        <p class="text-xl text-slate-700 leading-relaxed text-justify">${attr.long}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <a href="${attr.official}" target="_blank" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200 hover:border-orange-500 hover:bg-orange-50 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🌐</span>
+                                <span class="font-bold text-slate-700 group-hover:text-orange-900">האתר הרשמי</span>
+                            </div>
+                            <span class="text-slate-400 group-hover:text-orange-600 group-hover:translate-x-[-4px] transition-all">←</span>
+                        </a>
+                        <a href="${attr.wiki}" target="_blank" class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">📖</span>
+                                <span class="font-bold text-slate-700 group-hover:text-blue-900">ויקיפדיה</span>
+                            </div>
+                            <span class="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-[-4px] transition-all">←</span>
+                        </a>
+                    </div>
+
+                    <div class="bg-blue-50 p-6 rounded-2xl flex items-start gap-4 border-r-4 border-blue-500 shadow-sm">
+                        <span class="text-2xl">💡</span>
+                        <div>
+                            <p class="text-blue-900 font-bold mb-1">טיפ חשוב</p>
+                            <p class="text-blue-800 text-sm leading-relaxed">מומלץ תמיד לבדוק את שעות הפתיחה העדכניות באתר הרשמי לפני ההגעה, שכן הן עשויות להשתנות בחגים ואירועים מקומיים.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.classList.add('modal-open');
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('invisible', 'opacity-0');
+            overlay.classList.add('opacity-100');
+            document.getElementById('modal-content').classList.remove('scale-95');
+            document.getElementById('modal-content').classList.add('scale-100');
+        }
+
+        function closeModal() {
+            document.body.classList.remove('modal-open');
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0', 'invisible');
+            document.getElementById('modal-content').classList.remove('scale-100');
+            document.getElementById('modal-content').classList.add('scale-95');
+        }
+
+        window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+        function initChart() {
+            const ctx = document.getElementById('attractionsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(reportData),
+                    datasets: [{ data: Object.keys(reportData).map(c => reportData[c].attractions.length), backgroundColor: '#ea580c', borderRadius: 10 }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { initMap(); initTabs(); initChart(); });
+    </script>
+</body>
+</html>
